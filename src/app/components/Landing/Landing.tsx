@@ -49,12 +49,24 @@ const TableComponent = ({ columns, data }) => {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer"
+                  onClick={header.column.getToggleSortingHandler()}
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
+                  <div className="flex items-center justify-between">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {header.column.getIsSorted() ? (
+                      header.column.getIsSorted() === "asc" ? (
+                        <span>🔼</span>
+                      ) : (
+                        <span>🔽</span>
+                      )
+                    ) : (
+                      ""
+                    )}
+                  </div>
                 </th>
               ))}
             </tr>
