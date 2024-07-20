@@ -30,15 +30,24 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
   }
 };
 
-const TableComponent = ({ columns, data }) => {
+const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }) => {
   const table = useReactTable({
     columns,
     data,
+    state: { columnVisibility },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
   });
+
+  const handleColumnToggle = (columnId) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: !prev[columnId],
+    }));
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -97,10 +106,27 @@ export const Landing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("acceptedDelegations");
+  const [columnVisibilityMap, setColumnVisibilityMap] = useState({});
+  const [showColumnToggle, setShowColumnToggle] = useState(false);
 
   useEffect(() => {
     fetchTableData("http://localhost:8080/data", setData, setLoading, setError);
   }, []);
+
+  useEffect(() => {
+    // Initialize column visibility for each tab if not already done
+    if (!columnVisibilityMap[activeTab]) {
+      const columns = columnsMap[activeTab];
+      const initialVisibility = {};
+      columns.forEach((column) => {
+        initialVisibility[column.accessorKey] = true;
+      });
+      setColumnVisibilityMap((prev) => ({
+        ...prev,
+        [activeTab]: initialVisibility,
+      }));
+    }
+  }, [activeTab]);
 
   const columnsMap = {
     acceptedDelegations: [
@@ -112,12 +138,7 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortStacker}
             </a>
           );
@@ -131,17 +152,9 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
           return (
-            <a
-              href={`${GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortPoxAddress}
             </a>
           );
@@ -157,12 +170,7 @@ export const Landing = () => {
           const txid = getValue();
           const shortTxid = `${txid.slice(0, 3)}...${txid.slice(-3)}`;
           return (
-            <a
-              href={GET_TRANSACTION_EXPLORER_URL(txid)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_TRANSACTION_EXPLORER_URL(txid)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortTxid}
             </a>
           );
@@ -177,12 +185,7 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortStacker}
             </a>
           );
@@ -194,17 +197,9 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
           return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortPoxAddress}
             </a>
           );
@@ -224,12 +219,7 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortStacker}
             </a>
           );
@@ -243,17 +233,9 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
           return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortPoxAddress}
             </a>
           );
@@ -270,12 +252,7 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortStacker}
             </a>
           );
@@ -289,17 +266,9 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
           return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortPoxAddress}
             </a>
           );
@@ -314,17 +283,9 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
           return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               {shortPoxAddress}
             </a>
           );
@@ -338,12 +299,19 @@ export const Landing = () => {
   };
 
   const renderTable = () => {
-    if (!data) return null;
+    if (!data || !columnVisibilityMap[activeTab]) return null;
 
     return (
       <TableComponent
         columns={columnsMap[activeTab]}
         data={data[activeTab] || []}
+        columnVisibility={columnVisibilityMap[activeTab]}
+        setColumnVisibility={(visibility) =>
+          setColumnVisibilityMap((prev) => ({
+            ...prev,
+            [activeTab]: visibility,
+          }))
+        }
       />
     );
   };
@@ -358,6 +326,36 @@ export const Landing = () => {
 
   return (
     <div className="p-4">
+      <div className="flex justify-between mb-4">
+        <button
+          onClick={() => setShowColumnToggle(!showColumnToggle)}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+        >
+          Hide Columns Option
+        </button>
+        {showColumnToggle && (
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+            {columnsMap[activeTab].map((column) => (
+              <label key={column.accessorKey} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={columnVisibilityMap[activeTab][column.accessorKey]}
+                  onChange={() => {
+                    setColumnVisibilityMap((prev) => ({
+                      ...prev,
+                      [activeTab]: {
+                        ...prev[activeTab],
+                        [column.accessorKey]: !prev[activeTab][column.accessorKey],
+                      },
+                    }));
+                  }}
+                />
+                <span>{column.header}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
       <ul className="flex border-b mb-4">
         {Object.keys(columnsMap).map((tab) => (
           <li
