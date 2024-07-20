@@ -8,8 +8,9 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 const inter = Roboto({ subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
-  title: "Stacks Solo Stacking",
-  description: "The solo stacking solution by Degen Lab",
+  title: "Automation of Stacker Delegations",
+  description:
+    "Automatically lock and stack the STX delegated to your address.",
 };
 
 export default function RootLayout({

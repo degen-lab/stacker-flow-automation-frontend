@@ -12,7 +12,6 @@ import Image from "next/image";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/app/contexts/AuthContext";
 import { Button } from "@nextui-org/button";
-import { UserAvatar, UserAvatarSTXAddress } from "../User/UserAvatar";
 import { HamburgerDropdown } from "./Dropdown";
 import { ThemeSwitch } from "./ThemeSwitch";
 
@@ -39,7 +38,7 @@ export const NavbarSoloStacking = () => {
         <Link color="foreground" href="/">
           <Image
             src="/stacks-logo.png"
-            alt="Stacks Solo Stacking"
+            alt="Automation of Stacker Delegation"
             priority
             width={30}
             height={30}
@@ -50,7 +49,7 @@ export const NavbarSoloStacking = () => {
         <NavbarBrand>
           <Link color="foreground" href="/">
             <p className="text-xl font-extrabold text-inherit">
-              Stacks Solo Stacking
+              Automation of Stacker Delegation
             </p>
           </Link>
         </NavbarBrand>
@@ -60,14 +59,10 @@ export const NavbarSoloStacking = () => {
         />
       </NavbarContent>
       <NavbarContent className="hidden md:flex" justify="end">
-        <UserAvatar></UserAvatar>
         <HamburgerDropdown />
       </NavbarContent>
 
       <NavbarMenu className="text-center">
-        <NavbarMenuItem className="mb-4">
-          <UserAvatarSTXAddress />
-        </NavbarMenuItem>
         <NavbarMenuItem className="mb-4">
           <ThemeSwitch />
           <Divider />

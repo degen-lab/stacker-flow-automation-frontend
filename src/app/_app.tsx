@@ -3,6 +3,8 @@ import { NextUIProvider } from "@nextui-org/react";
 import React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import "../styles/globals.css";
+
 // import { UnisatWalletExternalTypes } from "@/app/components/wallet/types";
 
 // declare global {
