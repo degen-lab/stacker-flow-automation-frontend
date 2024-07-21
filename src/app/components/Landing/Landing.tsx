@@ -35,8 +35,41 @@ type CustomColumnDef<TData> = ColumnDef<TData> & {
   accessorKey?: string;
 };
 
+// interface CustomColumn<TData> extends Column<TData, unknown> {
+//   columnDef: CustomColumnDef<TData>;
+//   getFilterValue: () =>
+//     | string
+//     | number
+//     | readonly string[]
+//     | [string, string]
+//     | undefined;
+//   setFilterValue: (
+//     value: string | number | readonly string[] | [string, string] | undefined
+//   ) => void;
+// }
+
+function isCustomColumn<TData>(
+  column: Column<TData, unknown>
+): column is Column<TData, unknown> & {
+  columnDef: CustomColumnDef<TData>;
+  getFilterValue: () => string | number;
+  setFilterValue: (value: string | number) => void;
+} {
+  return (
+    "getFilterValue" in column &&
+    "setFilterValue" in column &&
+    "columnDef" in column
+  );
+}
+
 interface FilterProps<TData> {
-  column: Column<TData, unknown> & { columnDef: CustomColumnDef<TData> };
+  column: Column<TData, unknown> & {
+    columnDef: CustomColumnDef<TData>;
+    getFilterValue: () => string | number | readonly string[] | undefined;
+    setFilterValue: (
+      value: string | number | readonly string[] | undefined
+    ) => void;
+  };
 }
 
 interface TableComponentProps {
@@ -83,7 +116,17 @@ const fetchTableData = async (
 };
 
 const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
-  const columnFilterValue = column.getFilterValue();
+  if (!isCustomColumn(column)) {
+    return null;
+  }
+
+  const columnFilterValue = column.getFilterValue() as
+    | string
+    | number
+    | readonly string[]
+    | [number, number]
+    | undefined;
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -96,9 +139,11 @@ const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
         <div className="flex space-x-2">
           <input
             type="number"
-            value={columnFilterValue?.[0] ?? ""}
+            value={
+              (columnFilterValue as [number, number] | undefined)?.[0] ?? ""
+            }
             onChange={(e) =>
-              column.setFilterValue((old: [string, string]) => [
+              column.setFilterValue((old: [number, number]) => [
                 e.target.value,
                 old?.[1],
               ])
@@ -108,9 +153,11 @@ const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
           />
           <input
             type="number"
-            value={columnFilterValue?.[1] ?? ""}
+            value={
+              (columnFilterValue as [number, number] | undefined)?.[1] ?? ""
+            }
             onChange={(e) =>
-              column.setFilterValue((old: [string, string]) => [
+              column.setFilterValue((old: [number, number]) => [
                 old?.[0],
                 e.target.value,
               ])
@@ -122,7 +169,7 @@ const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
       ) : (
         <input
           type="text"
-          value={columnFilterValue ?? ""}
+          value={(columnFilterValue as string | undefined) ?? ""}
           onChange={(e) => column.setFilterValue(e.target.value)}
           placeholder={`Search...`}
           className="w-36 border shadow rounded"
@@ -161,9 +208,10 @@ const TableComponent: React.FC<TableComponentProps> = ({
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex flex-col items-center justify-center">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
+                    {typeof header.column.columnDef.header === "function" ? (
+                      header.column.columnDef.header(header.getContext())
+                    ) : (
+                      <span>{header.column.columnDef.header}</span>
                     )}
                     {header.column.getIsSorted() ? (
                       header.column.getIsSorted() === "asc" ? (
@@ -174,7 +222,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
                     ) : (
                       ""
                     )}
-                    <Filter column={header.column} />
+                    {isCustomColumn(header.column) && (
+                      <Filter column={header.column} />
+                    )}
                   </div>
                 </th>
               ))}
@@ -188,7 +238,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
                 <td
                   key={cell.id}
                   className="px-6 py-4 text-sm text-gray-500 border-b border-r text-center"
-                  data-label={cell.column.columnDef.header}
+                  data-label={cell.column.columnDef.header as string}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
@@ -558,7 +608,7 @@ export const Landing: React.FC = () => {
         setColumnVisibility={(visibility) =>
           setColumnVisibilityMap((prev) => ({
             ...prev,
-            [activeTab]: visibility,
+            [activeTab]: visibility as Record<string, boolean>,
           }))
         }
       />
@@ -607,7 +657,7 @@ export const Landing: React.FC = () => {
                     }));
                   }}
                 />
-                <span>{column.header}</span>
+                <span>{column.header?.toString()}</span>
               </label>
             ))}
           </div>
