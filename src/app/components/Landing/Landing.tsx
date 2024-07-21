@@ -335,11 +335,11 @@ export const Landing = () => {
         </button>
         {showColumnToggle && (
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            {columnsMap[activeTab].map((column) => (
+            {columnsMap[activeTab]?.map((column) => (
               <label key={column.accessorKey} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={columnVisibilityMap[activeTab][column.accessorKey]}
+                  checked={columnVisibilityMap[activeTab]?.[column.accessorKey]}
                   onChange={() => {
                     setColumnVisibilityMap((prev) => ({
                       ...prev,
