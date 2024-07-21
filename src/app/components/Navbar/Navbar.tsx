@@ -1,84 +1,42 @@
 "use client";
-import {
-  Navbar,
-  NavbarBrand,
-  NavbarContent,
-  NavbarMenu,
-  NavbarMenuItem,
-  NavbarMenuToggle,
-} from "@nextui-org/navbar";
-import { Divider, Link } from "@nextui-org/react";
+import { Navbar, NavbarBrand, NavbarContent } from "@nextui-org/navbar";
+import { Link } from "@nextui-org/react";
 import Image from "next/image";
-import { useContext, useState } from "react";
-import { AuthContext } from "@/app/contexts/AuthContext";
-import { Button } from "@nextui-org/button";
-import { HamburgerDropdown } from "./Dropdown";
-import { ThemeSwitch } from "./ThemeSwitch";
-
-// NavbarItem interface. Useful if we want to add more items to the navbar in the future
-export interface NavbarItem {
-  name: string;
-  location: string;
-  color?:
-    | "foreground"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "warning"
-    | "danger";
-}
 
 export const NavbarSoloStacking = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, login, logout } = useContext(AuthContext);
-
   return (
-    <Navbar className="p-0 m-0" onMenuOpenChange={setIsMenuOpen}>
-      <NavbarContent>
-        <Link color="foreground" href="/">
-          <Image
-            src="/stacks-logo.png"
-            alt="Automation of Stacker Delegation"
-            priority
-            width={30}
-            height={30}
-          />
-        </Link>
-      </NavbarContent>
-      <NavbarContent className="p-0" justify="center">
-        <NavbarBrand>
+    <Navbar className="p-0 m-0">
+      <div className="w-full flex justify-center items-center">
+        <div className="flex items-center space-x-4">
           <Link color="foreground" href="/">
-            <p className="text-xl font-extrabold text-inherit">
-              Automation of Stacker Delegation
-            </p>
+            <Image
+              src="/stacks-logo.png"
+              alt="Automation of Stacker Delegation"
+              priority
+              width={30}
+              height={30}
+            />
           </Link>
-        </NavbarBrand>
-        <NavbarMenuToggle
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          className="md:hidden p-0"
-        />
-      </NavbarContent>
-      <NavbarContent className="hidden md:flex" justify="end">
-        <HamburgerDropdown />
-      </NavbarContent>
-
-      <NavbarMenu className="text-center">
-        <NavbarMenuItem className="mb-4">
-          <ThemeSwitch />
-          <Divider />
-        </NavbarMenuItem>
-        <NavbarMenuItem className="mb-4">
-          {isAuthenticated() ? (
-            <Button color="primary" variant="ghost" onClick={logout}>
-              Logout
-            </Button>
-          ) : (
-            <Button color="primary" variant="ghost" onClick={() => login()}>
-              Connect Wallet
-            </Button>
-          )}
-        </NavbarMenuItem>
-      </NavbarMenu>
+          <NavbarContent>
+            <NavbarBrand>
+              <Link color="foreground" href="/">
+                <p className="text-xl font-extrabold text-inherit">
+                  Automation of Stacker Delegation
+                </p>
+              </Link>
+            </NavbarBrand>
+          </NavbarContent>
+          <Link color="foreground" href="/">
+            <Image
+              src="/stacks-logo.png"
+              alt="Automation of Stacker Delegation"
+              priority
+              width={30}
+              height={30}
+            />
+          </Link>
+        </div>
+      </div>
     </Navbar>
   );
 };

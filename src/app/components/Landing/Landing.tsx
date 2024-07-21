@@ -1,377 +1,193 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useFetchTableData } from "../../../hooks/useFetchTableData";
+import { TableComponent } from "../Table/TableComponent";
+import { columnsMap } from "../Table/ColumnDefinitions";
+import { CustomColumnDef, RowData } from "@/types/tableTypes";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  flexRender,
+  OnChangeFn,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
 } from "@tanstack/react-table";
-import {
-  GET_BITCOIN_ADDRESS_EXPLORER_URL,
-  GET_STACKS_ADDRESS_EXPLORER_URL,
-  GET_TRANSACTION_EXPLORER_URL,
-} from "@/app/consts";
 
-const fetchTableData = async (url, setData, setLoading, setError) => {
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    setData(response.data);
-    setLoading(false);
-  } catch (error) {
-    setError(error);
-    setLoading(false);
-  }
-};
-
-const TableComponent = ({ columns, data }) => {
-  const table = useReactTable({
-    columns,
-    data,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border border-gray-200">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="bg-gray-100">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer"
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  <div className="flex items-center justify-between">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                    {header.column.getIsSorted() ? (
-                      header.column.getIsSorted() === "asc" ? (
-                        <span>🔼</span>
-                      ) : (
-                        <span>🔽</span>
-                      )
-                    ) : (
-                      ""
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="bg-white odd:bg-gray-50">
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="px-6 py-4 text-sm text-gray-500 border-b"
-                  data-label={cell.column.columnDef.header}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-export const Landing = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export const Landing: React.FC = () => {
   const [activeTab, setActiveTab] = useState("acceptedDelegations");
+  const [columnVisibilityMap, setColumnVisibilityMap] = useState<
+    Record<string, VisibilityState>
+  >({});
+  const [filterStates, setFilterStates] = useState<
+    Record<string, ColumnFiltersState>
+  >({});
+  const [sortStates, setSortStates] = useState<Record<string, SortingState>>(
+    {}
+  );
+  const [showColumnToggle, setShowColumnToggle] = useState(false);
 
+  const { data, loading, error } = useFetchTableData(
+    "http://localhost:8080/data"
+  );
+
+  const currentColumns = useMemo(() => columnsMap[activeTab], [activeTab]);
+  const currentData = useMemo(() => data?.[activeTab] ?? [], [data, activeTab]);
+
+  // Initialize states for all tabs
   useEffect(() => {
-    fetchTableData("http://localhost:8080/data", setData, setLoading, setError);
+    interface InitialState {
+      visibility: VisibilityState;
+      filters: ColumnFiltersState;
+      sorting: SortingState;
+    }
+
+    const initialStates: Record<string, InitialState> = {};
+    Object.keys(columnsMap).forEach((tab) => {
+      initialStates[tab] = {
+        visibility: {},
+        filters: [],
+        sorting: [],
+      };
+      columnsMap[tab].forEach((column) => {
+        initialStates[tab].visibility[column.accessorKey as string] = true;
+      });
+    });
+    setColumnVisibilityMap(
+      Object.fromEntries(
+        Object.entries(initialStates).map(([key, value]) => [
+          key,
+          value.visibility,
+        ])
+      )
+    );
+    setFilterStates(
+      Object.fromEntries(
+        Object.entries(initialStates).map(([key, value]) => [
+          key,
+          value.filters,
+        ])
+      )
+    );
+    setSortStates(
+      Object.fromEntries(
+        Object.entries(initialStates).map(([key, value]) => [
+          key,
+          value.sorting,
+        ])
+      )
+    );
   }, []);
 
-  const columnsMap = {
-    acceptedDelegations: [
-      {
-        header: "Stacker",
-        accessorKey: "stacker",
-        cell: ({ getValue }) => {
-          const stacker = getValue();
-          if (!stacker) return "";
-          const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
-          return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortStacker}
-            </a>
-          );
-        },
-      },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      {
-        header: "POX Address",
-        accessorKey: "poxAddress",
-        cell: ({ getValue }) => {
-          const poxAddress = getValue();
-          if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
-          return (
-            <a
-              href={`${GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortPoxAddress}
-            </a>
-          );
-        },
-      },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
-    ],
-    pendingTransactions: [
-      {
-        header: "Transaction ID",
-        accessorKey: "txid",
-        cell: ({ getValue }) => {
-          const txid = getValue();
-          const shortTxid = `${txid.slice(0, 3)}...${txid.slice(-3)}`;
-          return (
-            <a
-              href={GET_TRANSACTION_EXPLORER_URL(txid)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortTxid}
-            </a>
-          );
-        },
-      },
-      { header: "Function Name", accessorKey: "functionName" },
-      {
-        header: "Stacker",
-        accessorKey: "stacker",
-        cell: ({ getValue }) => {
-          const stacker = getValue();
-          if (!stacker) return "";
-          const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
-          return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortStacker}
-            </a>
-          );
-        },
-      },
-      {
-        header: "POX Address",
-        accessorKey: "poxAddress",
-        cell: ({ getValue }) => {
-          const poxAddress = getValue();
-          if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
-          return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortPoxAddress}
-            </a>
-          );
-        },
-      },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      { header: "Reward Cycle", accessorKey: "rewardCycle" },
-      { header: "Reward Index", accessorKey: "rewardIndex" },
-    ],
-    delegations: [
-      {
-        header: "Stacker",
-        accessorKey: "stacker",
-        cell: ({ getValue }) => {
-          const stacker = getValue();
-          if (!stacker) return "";
-          const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
-          return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortStacker}
-            </a>
-          );
-        },
-      },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      {
-        header: "POX Address",
-        accessorKey: "poxAddress",
-        cell: ({ getValue }) => {
-          const poxAddress = getValue();
-          if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
-          return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortPoxAddress}
-            </a>
-          );
-        },
-      },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
-    ],
-    previousDelegations: [
-      {
-        header: "Stacker",
-        accessorKey: "stacker",
-        cell: ({ getValue }) => {
-          const stacker = getValue();
-          if (!stacker) return "";
-          const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
-          return (
-            <a
-              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortStacker}
-            </a>
-          );
-        },
-      },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      {
-        header: "POX Address",
-        accessorKey: "poxAddress",
-        cell: ({ getValue }) => {
-          const poxAddress = getValue();
-          if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
-          return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortPoxAddress}
-            </a>
-          );
-        },
-      },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
-    ],
-    committedDelegations: [
-      {
-        header: "POX Address",
-        accessorKey: "poxAddress",
-        cell: ({ getValue }) => {
-          const poxAddress = getValue();
-          if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(
-            0,
-            3
-          )}...${poxAddress.slice(-3)}`;
-          return (
-            <a
-              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {shortPoxAddress}
-            </a>
-          );
-        },
-      },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
-      { header: "Reward Index", accessorKey: "rewardIndex" },
-    ],
-  };
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
 
-  const renderTable = () => {
-    if (!data) return null;
+  const handleColumnVisibilityChange: OnChangeFn<VisibilityState> = useCallback(
+    (updater) => {
+      setColumnVisibilityMap((prev) => ({
+        ...prev,
+        [activeTab]:
+          typeof updater === "function" ? updater(prev[activeTab]) : updater,
+      }));
+    },
+    [activeTab]
+  );
 
-    return (
-      <TableComponent
-        columns={columnsMap[activeTab]}
-        data={data[activeTab] || []}
-      />
-    );
-  };
+  const handleFilterChange: OnChangeFn<ColumnFiltersState> = useCallback(
+    (updater) => {
+      setFilterStates((prev) => ({
+        ...prev,
+        [activeTab]:
+          typeof updater === "function" ? updater(prev[activeTab]) : updater,
+      }));
+    },
+    [activeTab]
+  );
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const handleSortingChange: OnChangeFn<SortingState> = useCallback(
+    (updater) => {
+      setSortStates((prev) => ({
+        ...prev,
+        [activeTab]:
+          typeof updater === "function" ? updater(prev[activeTab]) : updater,
+      }));
+    },
+    [activeTab]
+  );
 
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="p-4">
-      <ul className="flex border-b mb-4">
+    <div className="flex flex-col h-screen p-4">
+      <div className="flex justify-between mb-4">
+        <button
+          onClick={() => setShowColumnToggle(!showColumnToggle)}
+          className="bg-orange-500 text-white px-4 py-2 rounded-md"
+        >
+          {showColumnToggle ? "Hide" : "Show"} Column Visibility Settings
+        </button>
+        {showColumnToggle && (
+          <div className="flex overflow-x-auto space-x-4">
+            {currentColumns.map((column: CustomColumnDef<RowData>) => (
+              <label
+                key={column.accessorKey as string}
+                className="flex items-center space-x-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={
+                    columnVisibilityMap[activeTab]?.[
+                      column.accessorKey as string
+                    ]
+                  }
+                  onChange={() =>
+                    handleColumnVisibilityChange((prev) => ({
+                      ...prev,
+                      [column.accessorKey as string]:
+                        !prev[column.accessorKey as string],
+                    }))
+                  }
+                />
+                <span>{column.header?.toString()}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+      <ul className="flex border-b mb-4 overflow-x-auto whitespace-nowrap">
         {Object.keys(columnsMap).map((tab) => (
           <li
             key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`cursor-pointer mr-4 px-4 py-2 ${
+            onClick={() => handleTabChange(tab)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleTabChange(tab);
+              }
+            }}
+            role="tab"
+            tabIndex={0}
+            className={`cursor-pointer mr-4 px-4 py-2 text-center ${
               activeTab === tab ? "border-b-2 border-black" : ""
             }`}
           >
-            {tab}
+            {tab
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (str) => str.toUpperCase())}
           </li>
         ))}
       </ul>
-      <div>{renderTable()}</div>
+      <div className="flex-1 overflow-y-auto pb-12">
+        <TableComponent
+          columns={currentColumns}
+          data={currentData}
+          columnVisibility={columnVisibilityMap[activeTab] || {}}
+          setColumnVisibility={handleColumnVisibilityChange}
+          filters={filterStates[activeTab] || []}
+          onFiltersChange={handleFilterChange}
+          sorting={sortStates[activeTab] || []}
+          onSortingChange={handleSortingChange}
+        />
+      </div>
     </div>
   );
 };
+
+export default Landing;
