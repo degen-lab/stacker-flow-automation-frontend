@@ -6,7 +6,6 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
-  getPaginationRowModel,
   flexRender,
 } from "@tanstack/react-table";
 import {
@@ -22,7 +21,19 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
         "Content-Type": "application/json",
       },
     });
-    setData(response.data);
+
+    const transformedData = {};
+    for (const key in response.data) {
+      if (Array.isArray(response.data[key])) {
+        transformedData[key] = response.data[key].map((row) => ({
+          ...row,
+          amountStx: row.amountUstx / 10 ** 6,
+        }));
+      } else {
+        transformedData[key] = response.data[key];
+      }
+    }
+    setData(transformedData);
     setLoading(false);
   } catch (error) {
     setError(error);
@@ -32,7 +43,9 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
 
 const Filter = ({ column }) => {
   const columnFilterValue = column.getFilterValue();
-  const sortedUniqueValues = Array.from(column.getFacetedUniqueValues().keys()).sort();
+  const sortedUniqueValues = Array.from(
+    column.getFacetedUniqueValues().keys()
+  ).sort();
   return (
     <div onClick={(e) => e.stopPropagation()} className="mt-2">
       {column.columnDef.filterType === "number" ? (
@@ -40,14 +53,18 @@ const Filter = ({ column }) => {
           <input
             type="number"
             value={columnFilterValue?.[0] ?? ""}
-            onChange={(e) => column.setFilterValue((old) => [e.target.value, old?.[1]])}
+            onChange={(e) =>
+              column.setFilterValue((old) => [e.target.value, old?.[1]])
+            }
             placeholder={`Min`}
             className="w-24 border shadow rounded"
           />
           <input
             type="number"
             value={columnFilterValue?.[1] ?? ""}
-            onChange={(e) => column.setFilterValue((old) => [old?.[0], e.target.value])}
+            onChange={(e) =>
+              column.setFilterValue((old) => [old?.[0], e.target.value])
+            }
             placeholder={`Max`}
             className="w-24 border shadow rounded"
           />
@@ -78,7 +95,12 @@ const Filter = ({ column }) => {
   );
 };
 
-const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }) => {
+const TableComponent = ({
+  columns,
+  data,
+  columnVisibility,
+  setColumnVisibility,
+}) => {
   const table = useReactTable({
     columns,
     data,
@@ -86,7 +108,6 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
   });
 
@@ -98,7 +119,7 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
   };
 
   return (
-    <div className="overflow-x-auto">
+    <div className="flex-1 overflow-y-auto">
       <table className="min-w-full bg-white border border-gray-200">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -110,7 +131,10 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex flex-col items-center justify-center">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                     {header.column.getIsSorted() ? (
                       header.column.getIsSorted() === "asc" ? (
                         <span>🔼</span>
@@ -174,6 +198,13 @@ export const Landing = () => {
     }
   }, [activeTab]);
 
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
   const columnsMap = {
     acceptedDelegations: [
       {
@@ -185,13 +216,22 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortStacker}
             </a>
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      {
+        header: "Start Cycle",
+        accessorKey: "startCycle",
+        filterType: "number",
+      },
       { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
@@ -200,15 +240,30 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(
+            0,
+            3
+          )}...${poxAddress.slice(-3)}`;
           return (
-            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortPoxAddress}
             </a>
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
+      {
+        header: "Amount STX",
+        accessorKey: "amountStx",
+        filterType: "number",
+        cell: ({ getValue }) => {
+          return formatNumber(getValue());
+        },
+      },
     ],
     pendingTransactions: [
       {
@@ -219,7 +274,12 @@ export const Landing = () => {
           const txid = getValue();
           const shortTxid = `${txid.slice(0, 3)}...${txid.slice(-3)}`;
           return (
-            <a href={GET_TRANSACTION_EXPLORER_URL(txid)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_TRANSACTION_EXPLORER_URL(txid)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortTxid}
             </a>
           );
@@ -240,7 +300,12 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortStacker}
             </a>
           );
@@ -253,18 +318,38 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(
+            0,
+            3
+          )}...${poxAddress.slice(-3)}`;
           return (
-            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortPoxAddress}
             </a>
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      {
+        header: "Start Cycle",
+        accessorKey: "startCycle",
+        filterType: "number",
+      },
       { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
-      { header: "Reward Cycle", accessorKey: "rewardCycle", filterType: "number" },
-      { header: "Reward Index", accessorKey: "rewardIndex", filterType: "number" },
+      {
+        header: "Reward Cycle",
+        accessorKey: "rewardCycle",
+        filterType: "number",
+      },
+      {
+        header: "Reward Index",
+        accessorKey: "rewardIndex",
+        filterType: "number",
+      },
     ],
     delegations: [
       {
@@ -276,13 +361,22 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortStacker}
             </a>
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      {
+        header: "Start Cycle",
+        accessorKey: "startCycle",
+        filterType: "number",
+      },
       { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
@@ -291,15 +385,30 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(
+            0,
+            3
+          )}...${poxAddress.slice(-3)}`;
           return (
-            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortPoxAddress}
             </a>
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
+      {
+        header: "Amount STX",
+        accessorKey: "amountStx",
+        filterType: "number",
+        cell: ({ getValue }) => {
+          return formatNumber(getValue());
+        },
+      },
     ],
     previousDelegations: [
       {
@@ -311,13 +420,22 @@ export const Landing = () => {
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
-            <a href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortStacker}
             </a>
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      {
+        header: "Start Cycle",
+        accessorKey: "startCycle",
+        filterType: "number",
+      },
       { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
@@ -326,15 +444,30 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(
+            0,
+            3
+          )}...${poxAddress.slice(-3)}`;
           return (
-            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortPoxAddress}
             </a>
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
+      {
+        header: "Amount STX",
+        accessorKey: "amountStx",
+        filterType: "number",
+        cell: ({ getValue }) => {
+          return formatNumber(getValue());
+        },
+      },
     ],
     committedDelegations: [
       {
@@ -344,28 +477,52 @@ export const Landing = () => {
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
-          const shortPoxAddress = `${poxAddress.slice(0, 3)}...${poxAddress.slice(-3)}`;
+          const shortPoxAddress = `${poxAddress.slice(
+            0,
+            3
+          )}...${poxAddress.slice(-3)}`;
           return (
-            <a href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            <a
+              href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {shortPoxAddress}
             </a>
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      {
+        header: "Start Cycle",
+        accessorKey: "startCycle",
+        filterType: "number",
+      },
       { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
-      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
-      { header: "Reward Index", accessorKey: "rewardIndex", filterType: "number" },
+      {
+        header: "Amount STX",
+        accessorKey: "amountStx",
+        filterType: "number",
+        cell: ({ getValue }) => {
+          return formatNumber(getValue());
+        },
+      },
+      {
+        header: "Reward Index",
+        accessorKey: "rewardIndex",
+        filterType: "number",
+      },
     ],
   };
 
   const renderTable = () => {
-    if (!data || !columnVisibilityMap[activeTab]) return null;
+    if (!data || !data[activeTab] || !columnVisibilityMap[activeTab])
+      return null;
 
     return (
       <TableComponent
         columns={columnsMap[activeTab]}
-        data={data[activeTab] || []}
+        data={data[activeTab]}
         columnVisibility={columnVisibilityMap[activeTab]}
         setColumnVisibility={(visibility) =>
           setColumnVisibilityMap((prev) => ({
@@ -386,18 +543,23 @@ export const Landing = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="flex flex-col h-screen p-4">
+      {" "}
+      {/* Updated classes for Flexbox layout */}
       <div className="flex justify-between mb-4">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
           className="bg-blue-500 text-white px-4 py-2 rounded-md"
         >
-          Hide Columns Option
+          Manage Column Visibility
         </button>
         {showColumnToggle && (
           <div className="flex overflow-x-auto space-x-4">
             {columnsMap[activeTab]?.map((column) => (
-              <label key={column.accessorKey} className="flex items-center space-x-2">
+              <label
+                key={column.accessorKey}
+                className="flex items-center space-x-2"
+              >
                 <input
                   type="checkbox"
                   checked={columnVisibilityMap[activeTab]?.[column.accessorKey]}
@@ -406,7 +568,8 @@ export const Landing = () => {
                       ...prev,
                       [activeTab]: {
                         ...prev[activeTab],
-                        [column.accessorKey]: !prev[activeTab][column.accessorKey],
+                        [column.accessorKey]:
+                          !prev[activeTab][column.accessorKey],
                       },
                     }));
                   }}
@@ -426,11 +589,14 @@ export const Landing = () => {
               activeTab === tab ? "border-b-2 border-black" : ""
             }`}
           >
-            {tab.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+            {tab
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (str) => str.toUpperCase())}
           </li>
         ))}
       </ul>
-      <div className="overflow-x-auto">{renderTable()}</div>
+      <div className="flex-1 overflow-y-auto pb-12">{renderTable()}</div>{" "}
+      {/* Updated class for scrollable container */}
     </div>
   );
 };
