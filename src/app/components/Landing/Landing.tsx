@@ -34,7 +34,7 @@ const Filter = ({ column }) => {
   const columnFilterValue = column.getFilterValue();
   const sortedUniqueValues = Array.from(column.getFacetedUniqueValues().keys()).sort();
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()} className="mt-2">
       {column.columnDef.filterType === "number" ? (
         <div className="flex space-x-2">
           <input
@@ -106,10 +106,10 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer"
+                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r cursor-pointer"
                   onClick={header.column.getToggleSortingHandler()}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col items-center justify-center">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() ? (
                       header.column.getIsSorted() === "asc" ? (
@@ -120,8 +120,6 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
                     ) : (
                       ""
                     )}
-                  </div>
-                  <div>
                     <Filter column={header.column} />
                   </div>
                 </th>
@@ -135,7 +133,7 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="px-6 py-4 text-sm text-gray-500 border-b"
+                  className="px-6 py-4 text-sm text-gray-500 border-b border-r text-center"
                   data-label={cell.column.columnDef.header}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
