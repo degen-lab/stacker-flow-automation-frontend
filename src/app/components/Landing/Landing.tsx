@@ -30,6 +30,54 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
   }
 };
 
+const Filter = ({ column }) => {
+  const columnFilterValue = column.getFilterValue();
+  const sortedUniqueValues = Array.from(column.getFacetedUniqueValues().keys()).sort();
+  return (
+    <div onClick={(e) => e.stopPropagation()}>
+      {column.columnDef.filterType === "number" ? (
+        <div className="flex space-x-2">
+          <input
+            type="number"
+            value={columnFilterValue?.[0] ?? ""}
+            onChange={(e) => column.setFilterValue((old) => [e.target.value, old?.[1]])}
+            placeholder={`Min`}
+            className="w-24 border shadow rounded"
+          />
+          <input
+            type="number"
+            value={columnFilterValue?.[1] ?? ""}
+            onChange={(e) => column.setFilterValue((old) => [old?.[0], e.target.value])}
+            placeholder={`Max`}
+            className="w-24 border shadow rounded"
+          />
+        </div>
+      ) : column.columnDef.filterType === "select" ? (
+        <select
+          value={columnFilterValue ?? ""}
+          onChange={(e) => column.setFilterValue(e.target.value)}
+          className="w-36 border shadow rounded"
+        >
+          <option value="">All</option>
+          {sortedUniqueValues.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="text"
+          value={columnFilterValue ?? ""}
+          onChange={(e) => column.setFilterValue(e.target.value)}
+          placeholder={`Search...`}
+          className="w-36 border shadow rounded"
+        />
+      )}
+    </div>
+  );
+};
+
 const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }) => {
   const table = useReactTable({
     columns,
@@ -62,10 +110,7 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex items-center justify-between">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() ? (
                       header.column.getIsSorted() === "asc" ? (
                         <span>🔼</span>
@@ -75,6 +120,9 @@ const TableComponent = ({ columns, data, columnVisibility, setColumnVisibility }
                     ) : (
                       ""
                     )}
+                  </div>
+                  <div>
+                    <Filter column={header.column} />
                   </div>
                 </th>
               ))}
@@ -133,6 +181,7 @@ export const Landing = () => {
       {
         header: "Stacker",
         accessorKey: "stacker",
+        filterType: "text",
         cell: ({ getValue }) => {
           const stacker = getValue();
           if (!stacker) return "";
@@ -144,11 +193,12 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
+      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
         accessorKey: "poxAddress",
+        filterType: "text",
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
@@ -160,12 +210,13 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
+      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
     ],
     pendingTransactions: [
       {
         header: "Transaction ID",
         accessorKey: "txid",
+        filterType: "text",
         cell: ({ getValue }) => {
           const txid = getValue();
           const shortTxid = `${txid.slice(0, 3)}...${txid.slice(-3)}`;
@@ -176,10 +227,11 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Function Name", accessorKey: "functionName" },
+      { header: "Function Name", accessorKey: "functionName", filterType: "select" },
       {
         header: "Stacker",
         accessorKey: "stacker",
+        filterType: "text",
         cell: ({ getValue }) => {
           const stacker = getValue();
           if (!stacker) return "";
@@ -194,6 +246,7 @@ export const Landing = () => {
       {
         header: "POX Address",
         accessorKey: "poxAddress",
+        filterType: "text",
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
@@ -205,15 +258,16 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      { header: "Reward Cycle", accessorKey: "rewardCycle" },
-      { header: "Reward Index", accessorKey: "rewardIndex" },
+      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
+      { header: "Reward Cycle", accessorKey: "rewardCycle", filterType: "number" },
+      { header: "Reward Index", accessorKey: "rewardIndex", filterType: "number" },
     ],
     delegations: [
       {
         header: "Stacker",
         accessorKey: "stacker",
+        filterType: "text",
         cell: ({ getValue }) => {
           const stacker = getValue();
           if (!stacker) return "";
@@ -225,11 +279,12 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
+      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
         accessorKey: "poxAddress",
+        filterType: "text",
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
@@ -241,12 +296,13 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
+      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
     ],
     previousDelegations: [
       {
         header: "Stacker",
         accessorKey: "stacker",
+        filterType: "text",
         cell: ({ getValue }) => {
           const stacker = getValue();
           if (!stacker) return "";
@@ -258,11 +314,12 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
+      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
       {
         header: "POX Address",
         accessorKey: "poxAddress",
+        filterType: "text",
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
@@ -274,12 +331,13 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
+      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
     ],
     committedDelegations: [
       {
         header: "POX Address",
         accessorKey: "poxAddress",
+        filterType: "text",
         cell: ({ getValue }) => {
           const poxAddress = getValue();
           if (!poxAddress) return "";
@@ -291,10 +349,10 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Start Cycle", accessorKey: "startCycle" },
-      { header: "End Cycle", accessorKey: "endCycle" },
-      { header: "Amount USTX", accessorKey: "amountUstx" },
-      { header: "Reward Index", accessorKey: "rewardIndex" },
+      { header: "Start Cycle", accessorKey: "startCycle", filterType: "number" },
+      { header: "End Cycle", accessorKey: "endCycle", filterType: "number" },
+      { header: "Amount USTX", accessorKey: "amountUstx", filterType: "number" },
+      { header: "Reward Index", accessorKey: "rewardIndex", filterType: "number" },
     ],
   };
 
