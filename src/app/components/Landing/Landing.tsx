@@ -288,7 +288,7 @@ export const Landing = () => {
       {
         header: "Function Name",
         accessorKey: "functionName",
-        filterType: "select",
+        filterType: "text",
         cell: ({ getValue }) => getValue(),
       },
       {
