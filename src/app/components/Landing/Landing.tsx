@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   flexRender,
+  Column,
 } from "@tanstack/react-table";
 import {
   GET_BITCOIN_ADDRESS_EXPLORER_URL,
@@ -29,12 +30,17 @@ interface RowData {
   rewardIndex: number;
 }
 
-interface FilterProps {
-  column: any; // Replace 'any' with the correct type from React Table if available
+type CustomColumnDef<TData> = ColumnDef<TData> & {
+  filterType?: "text" | "number" | "select";
+  accessorKey?: string;
+};
+
+interface FilterProps<TData> {
+  column: Column<TData, unknown> & { columnDef: CustomColumnDef<TData> };
 }
 
 interface TableComponentProps {
-  columns: ColumnDef<RowData>[];
+  columns: CustomColumnDef<RowData>[];
   data: RowData[];
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: React.Dispatch<
@@ -76,11 +82,8 @@ const fetchTableData = async (
   }
 };
 
-const Filter: React.FC<FilterProps> = ({ column }) => {
+const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
   const columnFilterValue = column.getFilterValue();
-  const sortedUniqueValues = Array.from(
-    column.getFacetedUniqueValues().keys()
-  ).sort();
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -116,19 +119,6 @@ const Filter: React.FC<FilterProps> = ({ column }) => {
             className="w-24 border shadow rounded"
           />
         </div>
-      ) : column.columnDef.filterType === "select" ? (
-        <select
-          value={columnFilterValue ?? ""}
-          onChange={(e) => column.setFilterValue(e.target.value)}
-          className="w-36 border shadow rounded"
-        >
-          <option value="">All</option>
-          {sortedUniqueValues.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
       ) : (
         <input
           type="text"
@@ -220,7 +210,7 @@ export const Landing: React.FC = () => {
     Record<string, Record<string, boolean>>
   >({});
   const [showColumnToggle, setShowColumnToggle] = useState(false);
-
+  // update name to Hide Column Visibility Settings
   useEffect(() => {
     fetchTableData("http://localhost:8080/data", setData, setLoading, setError);
   }, []);
@@ -246,7 +236,7 @@ export const Landing: React.FC = () => {
     }).format(num);
   };
 
-  const columnsMap: Record<string, ColumnDef<RowData>[]> = {
+  const columnsMap: Record<string, CustomColumnDef<RowData>[]> = {
     acceptedDelegations: [
       {
         header: "Stacker",
@@ -261,7 +251,7 @@ export const Landing: React.FC = () => {
               href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-purple-600 hover:underline"
             >
               {shortStacker}
             </a>
@@ -290,7 +280,7 @@ export const Landing: React.FC = () => {
               href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               {shortPoxAddress}
             </a>
@@ -345,7 +335,7 @@ export const Landing: React.FC = () => {
               href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-purple-600 hover:underline"
             >
               {shortStacker}
             </a>
@@ -368,7 +358,7 @@ export const Landing: React.FC = () => {
               href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               {shortPoxAddress}
             </a>
@@ -406,7 +396,7 @@ export const Landing: React.FC = () => {
               href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-purple-600 hover:underline"
             >
               {shortStacker}
             </a>
@@ -435,7 +425,7 @@ export const Landing: React.FC = () => {
               href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               {shortPoxAddress}
             </a>
@@ -465,7 +455,7 @@ export const Landing: React.FC = () => {
               href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-purple-600 hover:underline"
             >
               {shortStacker}
             </a>
@@ -494,7 +484,7 @@ export const Landing: React.FC = () => {
               href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               {shortPoxAddress}
             </a>
@@ -527,7 +517,7 @@ export const Landing: React.FC = () => {
               href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               {shortPoxAddress}
             </a>
@@ -588,9 +578,9 @@ export const Landing: React.FC = () => {
       <div className="flex justify-between mb-4">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          className="bg-orange-500 text-white px-4 py-2 rounded-md"
         >
-          Manage Column Visibility
+          Show Column Visibility Settings
         </button>
         {showColumnToggle && (
           <div className="flex overflow-x-auto space-x-4">
