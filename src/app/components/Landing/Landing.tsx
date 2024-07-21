@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
+  ColumnDef,
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
@@ -14,7 +15,41 @@ import {
   GET_TRANSACTION_EXPLORER_URL,
 } from "@/app/consts";
 
-const fetchTableData = async (url, setData, setLoading, setError) => {
+// Define types for your data
+interface RowData {
+  stacker: string;
+  startCycle: number;
+  endCycle: number;
+  poxAddress: string;
+  amountUstx: number;
+  amountStx: number;
+  txid: string;
+  functionName: string;
+  rewardCycle: number;
+  rewardIndex: number;
+}
+
+interface FilterProps {
+  column: any; // Replace 'any' with the correct type from React Table if available
+}
+
+interface TableComponentProps {
+  columns: ColumnDef<RowData>[];
+  data: RowData[];
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+}
+
+const fetchTableData = async (
+  url: string,
+  setData: React.Dispatch<
+    React.SetStateAction<Record<string, RowData[]> | null>
+  >,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setError: React.Dispatch<React.SetStateAction<Error | null>>
+) => {
   try {
     const response = await axios.get(url, {
       headers: {
@@ -22,10 +57,10 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
       },
     });
 
-    const transformedData = {};
+    const transformedData: Record<string, RowData[]> = {};
     for (const key in response.data) {
       if (Array.isArray(response.data[key])) {
-        transformedData[key] = response.data[key].map((row) => ({
+        transformedData[key] = response.data[key].map((row: RowData) => ({
           ...row,
           amountStx: row.amountUstx / 10 ** 6,
         }));
@@ -36,25 +71,34 @@ const fetchTableData = async (url, setData, setLoading, setError) => {
     setData(transformedData);
     setLoading(false);
   } catch (error) {
-    setError(error);
+    setError(error as Error);
     setLoading(false);
   }
 };
 
-const Filter = ({ column }) => {
+const Filter: React.FC<FilterProps> = ({ column }) => {
   const columnFilterValue = column.getFilterValue();
   const sortedUniqueValues = Array.from(
     column.getFacetedUniqueValues().keys()
   ).sort();
   return (
-    <div onClick={(e) => e.stopPropagation()} className="mt-2">
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.key === "Enter" && e.stopPropagation()}
+      role="button"
+      tabIndex={0}
+      className="mt-2"
+    >
       {column.columnDef.filterType === "number" ? (
         <div className="flex space-x-2">
           <input
             type="number"
             value={columnFilterValue?.[0] ?? ""}
             onChange={(e) =>
-              column.setFilterValue((old) => [e.target.value, old?.[1]])
+              column.setFilterValue((old: [string, string]) => [
+                e.target.value,
+                old?.[1],
+              ])
             }
             placeholder={`Min`}
             className="w-24 border shadow rounded"
@@ -63,7 +107,10 @@ const Filter = ({ column }) => {
             type="number"
             value={columnFilterValue?.[1] ?? ""}
             onChange={(e) =>
-              column.setFilterValue((old) => [old?.[0], e.target.value])
+              column.setFilterValue((old: [string, string]) => [
+                old?.[0],
+                e.target.value,
+              ])
             }
             placeholder={`Max`}
             className="w-24 border shadow rounded"
@@ -95,7 +142,7 @@ const Filter = ({ column }) => {
   );
 };
 
-const TableComponent = ({
+const TableComponent: React.FC<TableComponentProps> = ({
   columns,
   data,
   columnVisibility,
@@ -111,15 +158,8 @@ const TableComponent = ({
     onColumnVisibilityChange: setColumnVisibility,
   });
 
-  const handleColumnToggle = (columnId) => {
-    setColumnVisibility((prev) => ({
-      ...prev,
-      [columnId]: !prev[columnId],
-    }));
-  };
-
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto pb-12">
       <table className="min-w-full bg-white border border-gray-200">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -171,12 +211,14 @@ const TableComponent = ({
   );
 };
 
-export const Landing = () => {
-  const [data, setData] = useState(null);
+export const Landing: React.FC = () => {
+  const [data, setData] = useState<Record<string, RowData[]> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
   const [activeTab, setActiveTab] = useState("acceptedDelegations");
-  const [columnVisibilityMap, setColumnVisibilityMap] = useState({});
+  const [columnVisibilityMap, setColumnVisibilityMap] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
   const [showColumnToggle, setShowColumnToggle] = useState(false);
 
   useEffect(() => {
@@ -184,12 +226,11 @@ export const Landing = () => {
   }, []);
 
   useEffect(() => {
-    // Initialize column visibility for each tab if not already done
     if (!columnVisibilityMap[activeTab]) {
       const columns = columnsMap[activeTab];
-      const initialVisibility = {};
+      const initialVisibility: Record<string, boolean> = {};
       columns.forEach((column) => {
-        initialVisibility[column.accessorKey] = true;
+        initialVisibility[column.accessorKey as string] = true;
       });
       setColumnVisibilityMap((prev) => ({
         ...prev,
@@ -198,21 +239,21 @@ export const Landing = () => {
     }
   }, [activeTab]);
 
-  const formatNumber = (num) => {
+  const formatNumber = (num: number) => {
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num);
   };
 
-  const columnsMap = {
+  const columnsMap: Record<string, ColumnDef<RowData>[]> = {
     acceptedDelegations: [
       {
         header: "Stacker",
         accessorKey: "stacker",
         filterType: "text",
         cell: ({ getValue }) => {
-          const stacker = getValue();
+          const stacker = getValue<string>();
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
@@ -238,7 +279,7 @@ export const Landing = () => {
         accessorKey: "poxAddress",
         filterType: "text",
         cell: ({ getValue }) => {
-          const poxAddress = getValue();
+          const poxAddress = getValue<string>();
           if (!poxAddress) return "";
           const shortPoxAddress = `${poxAddress.slice(
             0,
@@ -261,7 +302,7 @@ export const Landing = () => {
         accessorKey: "amountStx",
         filterType: "number",
         cell: ({ getValue }) => {
-          return formatNumber(getValue());
+          return formatNumber(getValue<number>());
         },
       },
     ],
@@ -271,7 +312,7 @@ export const Landing = () => {
         accessorKey: "txid",
         filterType: "text",
         cell: ({ getValue }) => {
-          const txid = getValue();
+          const txid = getValue<string>();
           const shortTxid = `${txid.slice(0, 3)}...${txid.slice(-3)}`;
           return (
             <a
@@ -296,7 +337,7 @@ export const Landing = () => {
         accessorKey: "stacker",
         filterType: "text",
         cell: ({ getValue }) => {
-          const stacker = getValue();
+          const stacker = getValue<string>();
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
@@ -316,7 +357,7 @@ export const Landing = () => {
         accessorKey: "poxAddress",
         filterType: "text",
         cell: ({ getValue }) => {
-          const poxAddress = getValue();
+          const poxAddress = getValue<string>();
           if (!poxAddress) return "";
           const shortPoxAddress = `${poxAddress.slice(
             0,
@@ -357,7 +398,7 @@ export const Landing = () => {
         accessorKey: "stacker",
         filterType: "text",
         cell: ({ getValue }) => {
-          const stacker = getValue();
+          const stacker = getValue<string>();
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
@@ -383,7 +424,7 @@ export const Landing = () => {
         accessorKey: "poxAddress",
         filterType: "text",
         cell: ({ getValue }) => {
-          const poxAddress = getValue();
+          const poxAddress = getValue<string>();
           if (!poxAddress) return "";
           const shortPoxAddress = `${poxAddress.slice(
             0,
@@ -406,7 +447,7 @@ export const Landing = () => {
         accessorKey: "amountStx",
         filterType: "number",
         cell: ({ getValue }) => {
-          return formatNumber(getValue());
+          return formatNumber(getValue<number>());
         },
       },
     ],
@@ -416,7 +457,7 @@ export const Landing = () => {
         accessorKey: "stacker",
         filterType: "text",
         cell: ({ getValue }) => {
-          const stacker = getValue();
+          const stacker = getValue<string>();
           if (!stacker) return "";
           const shortStacker = `${stacker.slice(0, 3)}...${stacker.slice(-3)}`;
           return (
@@ -442,7 +483,7 @@ export const Landing = () => {
         accessorKey: "poxAddress",
         filterType: "text",
         cell: ({ getValue }) => {
-          const poxAddress = getValue();
+          const poxAddress = getValue<string>();
           if (!poxAddress) return "";
           const shortPoxAddress = `${poxAddress.slice(
             0,
@@ -465,7 +506,7 @@ export const Landing = () => {
         accessorKey: "amountStx",
         filterType: "number",
         cell: ({ getValue }) => {
-          return formatNumber(getValue());
+          return formatNumber(getValue<number>());
         },
       },
     ],
@@ -475,7 +516,7 @@ export const Landing = () => {
         accessorKey: "poxAddress",
         filterType: "text",
         cell: ({ getValue }) => {
-          const poxAddress = getValue();
+          const poxAddress = getValue<string>();
           if (!poxAddress) return "";
           const shortPoxAddress = `${poxAddress.slice(
             0,
@@ -504,7 +545,7 @@ export const Landing = () => {
         accessorKey: "amountStx",
         filterType: "number",
         cell: ({ getValue }) => {
-          return formatNumber(getValue());
+          return formatNumber(getValue<number>());
         },
       },
       {
@@ -544,8 +585,6 @@ export const Landing = () => {
 
   return (
     <div className="flex flex-col h-screen p-4">
-      {" "}
-      {/* Updated classes for Flexbox layout */}
       <div className="flex justify-between mb-4">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
@@ -557,19 +596,23 @@ export const Landing = () => {
           <div className="flex overflow-x-auto space-x-4">
             {columnsMap[activeTab]?.map((column) => (
               <label
-                key={column.accessorKey}
+                key={column.accessorKey as string}
                 className="flex items-center space-x-2"
               >
                 <input
                   type="checkbox"
-                  checked={columnVisibilityMap[activeTab]?.[column.accessorKey]}
+                  checked={
+                    columnVisibilityMap[activeTab]?.[
+                      column.accessorKey as string
+                    ]
+                  }
                   onChange={() => {
                     setColumnVisibilityMap((prev) => ({
                       ...prev,
                       [activeTab]: {
                         ...prev[activeTab],
-                        [column.accessorKey]:
-                          !prev[activeTab][column.accessorKey],
+                        [column.accessorKey as string]:
+                          !prev[activeTab][column.accessorKey as string],
                       },
                     }));
                   }}
@@ -585,6 +628,13 @@ export const Landing = () => {
           <li
             key={tab}
             onClick={() => setActiveTab(tab)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setActiveTab(tab);
+              }
+            }}
+            role="tab"
+            tabIndex={0}
             className={`cursor-pointer mr-4 px-4 py-2 text-center ${
               activeTab === tab ? "border-b-2 border-black" : ""
             }`}
@@ -595,8 +645,7 @@ export const Landing = () => {
           </li>
         ))}
       </ul>
-      <div className="flex-1 overflow-y-auto pb-12">{renderTable()}</div>{" "}
-      {/* Updated class for scrollable container */}
+      <div className="flex-1 overflow-y-auto pb-12">{renderTable()}</div>
     </div>
   );
 };
