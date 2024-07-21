@@ -227,7 +227,12 @@ export const Landing = () => {
           );
         },
       },
-      { header: "Function Name", accessorKey: "functionName", filterType: "select" },
+      {
+        header: "Function Name",
+        accessorKey: "functionName",
+        filterType: "select",
+        cell: ({ getValue }) => getValue(),
+      },
       {
         header: "Stacker",
         accessorKey: "stacker",
@@ -392,7 +397,7 @@ export const Landing = () => {
           Hide Columns Option
         </button>
         {showColumnToggle && (
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="flex overflow-x-auto space-x-4">
             {columnsMap[activeTab]?.map((column) => (
               <label key={column.accessorKey} className="flex items-center space-x-2">
                 <input
@@ -414,20 +419,20 @@ export const Landing = () => {
           </div>
         )}
       </div>
-      <ul className="flex border-b mb-4">
+      <ul className="flex border-b mb-4 overflow-x-auto whitespace-nowrap">
         {Object.keys(columnsMap).map((tab) => (
           <li
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`cursor-pointer mr-4 px-4 py-2 ${
+            className={`cursor-pointer mr-4 px-4 py-2 text-center ${
               activeTab === tab ? "border-b-2 border-black" : ""
             }`}
           >
-            {tab}
+            {tab.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
           </li>
         ))}
       </ul>
-      <div>{renderTable()}</div>
+      <div className="overflow-x-auto">{renderTable()}</div>
     </div>
   );
 };
