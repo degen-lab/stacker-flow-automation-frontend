@@ -119,7 +119,7 @@ export const Landing: React.FC = () => {
       <div className="flex justify-between mb-4">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
-          className="bg-orange-500 text-white px-4 py-2 rounded-md"
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
         >
           {showColumnToggle ? "Hide" : "Show"} Column Visibility Settings
         </button>

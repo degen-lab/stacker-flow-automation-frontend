@@ -10,12 +10,10 @@ export const ThemeSwitch = () => {
     <Switch
       defaultSelected={theme === "dark"}
       size="md"
-      color="success"
+      color="primary"
       startContent={<SunIcon />}
       endContent={theme === "light" && <MoonIcon />}
       onClick={toggleTheme}
-    >
-      Dark mode
-    </Switch>
+    />
   );
 };

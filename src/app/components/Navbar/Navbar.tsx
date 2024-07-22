@@ -2,6 +2,7 @@
 import { Navbar, NavbarBrand, NavbarContent } from "@nextui-org/navbar";
 import { Link } from "@nextui-org/react";
 import Image from "next/image";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 export const NavbarSoloStacking = () => {
   return (
@@ -25,6 +26,7 @@ export const NavbarSoloStacking = () => {
                 </p>
               </Link>
             </NavbarBrand>
+            <ThemeSwitch />
           </NavbarContent>
           <Link color="foreground" href="/">
             <Image

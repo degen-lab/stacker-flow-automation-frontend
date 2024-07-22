@@ -18,7 +18,7 @@ const createStackerColumn = (): CustomColumnDef<RowData> => ({
         href={GET_STACKS_ADDRESS_EXPLORER_URL(stacker)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-purple-600 hover:underline"
+        className="text-purple-600 dark:text-purple-400 hover:underline"
       >
         {shortStacker}
       </a>
@@ -38,7 +38,7 @@ const createPoxAddressColumn = (): CustomColumnDef<RowData> => ({
         href={GET_BITCOIN_ADDRESS_EXPLORER_URL(poxAddress)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-orange-600 hover:underline"
+        className="text-orange-600 dark:text-orange-400 hover:underline"
       >
         {shortPoxAddress}
       </a>
@@ -58,7 +58,7 @@ const createTransactionColumn = (): CustomColumnDef<RowData> => ({
         href={GET_TRANSACTION_EXPLORER_URL(poxAddress)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-purple-600 hover:underline"
+        className="text-purple-600 dark:text-purple-400 hover:underline"
       >
         {shortPoxAddress}
       </a>
