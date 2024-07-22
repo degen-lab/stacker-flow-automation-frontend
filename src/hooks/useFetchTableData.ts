@@ -42,7 +42,7 @@ export const useFetchTableDataWithInterval = (
       }
     };
 
-    fetchData(); // Initial fetch
+    fetchData();
 
     const intervalId = setInterval(fetchData, interval);
 
