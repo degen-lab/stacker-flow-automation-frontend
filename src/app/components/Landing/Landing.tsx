@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useFetchTableDataWithInterval } from "../../../hooks/useFetchTableData";
+import { useFetchTableDataWithQuery } from "../../../hooks/useFetchTableData";
 import { TableComponent } from "../Table/TableComponent";
 import { columnsMap } from "../Table/ColumnDefinitions";
 import { CustomColumnDef, RowData } from "@/types/tableTypes";
@@ -24,7 +24,7 @@ export const Landing: React.FC = () => {
   );
   const [showColumnToggle, setShowColumnToggle] = useState(false);
 
-  const { data, loading, error } = useFetchTableDataWithInterval(
+  const { data, isLoading, error } = useFetchTableDataWithQuery(
     SERVER_URL,
     10000
   );
@@ -135,7 +135,7 @@ export const Landing: React.FC = () => {
     [activeTab]
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (

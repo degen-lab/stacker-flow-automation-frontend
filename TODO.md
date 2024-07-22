@@ -5,8 +5,7 @@ done - convert uSTX to STX and add format with xxx,xxx,xxx
 done - pagination / all at once
 done - remove unused / commented variables
 done - remove env and just use const file or better use env
+done - theme dark mode
 
 nope - filter with null included numbers
 nope - function name select from list -> just search
-
-theme dark mode

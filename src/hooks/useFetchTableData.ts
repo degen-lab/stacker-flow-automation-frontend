@@ -1,56 +1,34 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { RowData } from "@/types/tableTypes";
 
-export const useFetchTableDataWithInterval = (
-  url: string,
-  interval: number
-) => {
-  const [data, setData] = useState<Record<string, RowData[]> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+const fetchTableData = async (
+  url: string
+): Promise<Record<string, RowData[]>> => {
+  const response = await axios.get(url, {
+    headers: { "Content-Type": "application/json" },
+  });
 
-  useEffect(() => {
-    let isMounted = true;
+  const transformedData: Record<string, RowData[]> = {};
+  for (const key in response.data) {
+    if (Array.isArray(response.data[key])) {
+      transformedData[key] = response.data[key].map((row: RowData) => ({
+        ...row,
+        amountStx: row.amountUstx / 10 ** 6,
+      }));
+    } else {
+      transformedData[key] = response.data[key];
+    }
+  }
 
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(url, {
-          headers: { "Content-Type": "application/json" },
-        });
+  return transformedData;
+};
 
-        const transformedData: Record<string, RowData[]> = {};
-        for (const key in response.data) {
-          if (Array.isArray(response.data[key])) {
-            transformedData[key] = response.data[key].map((row: RowData) => ({
-              ...row,
-              amountStx: row.amountUstx / 10 ** 6,
-            }));
-          } else {
-            transformedData[key] = response.data[key];
-          }
-        }
-        if (isMounted) {
-          setData(transformedData);
-          setLoading(false);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setError(error instanceof Error ? error : new Error(String(error)));
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    const intervalId = setInterval(fetchData, interval);
-
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
-  }, [url, interval]);
-
-  return { data, loading, error };
+export const useFetchTableDataWithQuery = (url: string, interval: number) => {
+  return useQuery<Record<string, RowData[]>, Error>({
+    queryKey: ["tableData", url],
+    queryFn: () => fetchTableData(url),
+    refetchInterval: interval,
+    refetchIntervalInBackground: true,
+  });
 };
