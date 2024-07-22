@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useFetchTableData } from "../../../hooks/useFetchTableData";
+import { useFetchTableDataWithQuery } from "../../../hooks/useFetchTableData";
 import { TableComponent } from "../Table/TableComponent";
 import { columnsMap } from "../Table/ColumnDefinitions";
 import { CustomColumnDef, RowData } from "@/types/tableTypes";
@@ -9,6 +9,7 @@ import {
   SortingState,
   VisibilityState,
 } from "@tanstack/react-table";
+import { SERVER_URL } from "@/constants/urls";
 
 export const Landing: React.FC = () => {
   const [activeTab, setActiveTab] = useState("acceptedDelegations");
@@ -23,12 +24,34 @@ export const Landing: React.FC = () => {
   );
   const [showColumnToggle, setShowColumnToggle] = useState(false);
 
-  const { data, loading, error } = useFetchTableData(
-    "http://localhost:8080/data"
+  const { data, isLoading, error } = useFetchTableDataWithQuery(
+    SERVER_URL,
+    10000
   );
 
   const currentColumns = useMemo(() => columnsMap[activeTab], [activeTab]);
   const currentData = useMemo(() => data?.[activeTab] ?? [], [data, activeTab]);
+
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const defaultZoom = 100;
+
+  useEffect(() => {
+    document.body.style.transform = `scale(${zoomLevel / 100})`;
+    document.body.style.transformOrigin = "top left";
+    document.body.style.width = `${10000 / zoomLevel}%`;
+  }, [zoomLevel]);
+
+  const zoomIn = () => {
+    setZoomLevel((prevZoom) => Math.min(prevZoom + 5, 200));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel((prevZoom) => Math.max(prevZoom - 5, 35));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(defaultZoom);
+  };
 
   // Initialize states for all tabs
   useEffect(() => {
@@ -112,7 +135,7 @@ export const Landing: React.FC = () => {
     [activeTab]
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
@@ -120,7 +143,7 @@ export const Landing: React.FC = () => {
       <div className="flex justify-between mb-4">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
-          className="bg-orange-500 text-white px-4 py-2 rounded-md"
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
         >
           {showColumnToggle ? "Hide" : "Show"} Column Visibility Settings
         </button>
@@ -151,6 +174,26 @@ export const Landing: React.FC = () => {
             ))}
           </div>
         )}
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={zoomIn}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Zoom In
+        </button>
+        <button
+          onClick={zoomOut}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Zoom Out
+        </button>
+        <button
+          onClick={resetZoom}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Reset Zoom
+        </button>
       </div>
       <ul className="flex border-b mb-4 overflow-x-auto whitespace-nowrap">
         {Object.keys(columnsMap).map((tab) => (

@@ -36,14 +36,17 @@ export const TableComponent: React.FC<TableComponentProps> = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border border-gray-200">
+      <table className="min-w-full bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="bg-gray-100">
+            <tr
+              key={headerGroup.id}
+              className="bg-gray-100 dark:bg-neutral-900"
+            >
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r cursor-pointer"
+                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-neutral-600 cursor-pointer"
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex flex-col items-center justify-center">
@@ -71,11 +74,14 @@ export const TableComponent: React.FC<TableComponentProps> = ({
         <tbody>
           {table.getRowModel().rows.length > 0 ? (
             table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="bg-white odd:bg-gray-50">
+              <tr
+                key={row.id}
+                className="bg-white dark:bg-neutral-900 odd:bg-gray-50 dark:odd:bg-zinc-900"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="px-6 py-4 text-sm text-gray-500 border-b border-r text-center"
+                    className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-neutral-600 text-center"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -86,7 +92,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-6 py-4 text-sm text-gray-500 border-b border-r text-center"
+                className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-neutral-600 text-center"
               >
                 No data available
               </td>

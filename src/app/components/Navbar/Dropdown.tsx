@@ -37,14 +37,14 @@ export const HamburgerDropdown = () => {
       </DropdownTrigger>
       <DropdownMenu>
         <DropdownItem key="theme">
-          <ThemeSwitch></ThemeSwitch>
+          <ThemeSwitch />
         </DropdownItem>
         {isAuthenticated() ? (
           <DropdownItem key="divider">
             <Divider className="bg-[#f5f5f5] h-[2px]" />
           </DropdownItem>
         ) : (
-          <DropdownItem></DropdownItem>
+          <DropdownItem />
         )}
         {isAuthenticated() ? (
           <DropdownItem
@@ -55,7 +55,7 @@ export const HamburgerDropdown = () => {
             Logout
           </DropdownItem>
         ) : (
-          <DropdownItem></DropdownItem>
+          <DropdownItem />
         )}
       </DropdownMenu>
     </Dropdown>

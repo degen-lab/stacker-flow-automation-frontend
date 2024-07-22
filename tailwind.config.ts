@@ -10,19 +10,34 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // backgroundImage: {
-      //   "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-      //   "gradient-conic":
-      //     "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-      // },
+      colors: {
+        orange: {
+          500: "#f97316",
+        },
+      },
     },
   },
   darkMode: "class",
   plugins: [
     nextui({
+      addCommonColors: true,
       defaultTheme: "light",
       defaultExtendTheme: "dark",
+      layout: {},
+      themes: {
+        light: {
+          colors: {
+            primary: "#f97316",
+          },
+        },
+        dark: {
+          colors: {
+            primary: "#f97316",
+          },
+        },
+      },
     }),
   ],
 };
+
 export default config;

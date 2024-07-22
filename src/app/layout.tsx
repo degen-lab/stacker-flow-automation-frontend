@@ -4,6 +4,8 @@ import AuthContextProvider from "./contexts/AuthContext";
 import { NavbarSoloStacking } from "./components/Navbar/Navbar";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import ClientOnly from "./components/ClientOnly";
+import QueryProviders from "./providers";
 
 const inter = Roboto({ subsets: ["latin"], weight: "400" });
 
@@ -21,14 +23,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider>
-          <AuthContextProvider>
-            <div className="flex flex-col min-h-screen">
-              <NavbarSoloStacking />
-              <main className="flex-grow">{children}</main>
-            </div>
-          </AuthContextProvider>
-        </ThemeProvider>
+        <ClientOnly>
+          <QueryProviders>
+            <ThemeProvider>
+              <AuthContextProvider>
+                <div className="flex flex-col min-h-screen">
+                  <NavbarSoloStacking />
+                  <main className="flex-grow">{children}</main>
+                </div>
+              </AuthContextProvider>
+            </ThemeProvider>
+          </QueryProviders>
+        </ClientOnly>
       </body>
     </html>
   );

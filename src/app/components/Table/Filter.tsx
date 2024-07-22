@@ -1,14 +1,55 @@
-import { FilterProps, isCustomColumn, RowData } from "@/types/tableTypes";
+import React from "react";
+import { FilterProps, RowData } from "@/types/tableTypes";
 
 export const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
-  if (!isCustomColumn(column)) {
+  if (!("filterType" in column.columnDef)) {
     return null;
   }
 
-  const columnFilterValue = column.getFilterValue() as
-    | string
-    | number
-    | [number, number];
+  const columnFilterValue = column.getFilterValue();
+
+  const handleInputChange = (value: string, index: number) => {
+    if (column.columnDef.filterType === "number") {
+      const numValue = value === "" ? undefined : Number(value);
+      column.setFilterValue(
+        (
+          old: [number | undefined, number | undefined] = [undefined, undefined]
+        ) => {
+          const newValue = [...old];
+          newValue[index] = numValue;
+
+          // Ensure min is always less than or equal to max
+          if (newValue[0] !== undefined && newValue[1] !== undefined) {
+            if (index === 0 && newValue[0] > newValue[1]) {
+              // If setting min and it's greater than max, swap values
+              [newValue[0], newValue[1]] = [newValue[1], newValue[0]];
+            } else if (index === 1 && newValue[1] < newValue[0]) {
+              // If setting max and it's less than min, swap values
+              [newValue[0], newValue[1]] = [newValue[1], newValue[0]];
+            }
+          }
+
+          return newValue;
+        }
+      );
+    } else {
+      column.setFilterValue(value);
+    }
+  };
+
+  const renderInput = (placeholder: string, index: number) => (
+    <input
+      type={column.columnDef.filterType === "number" ? "number" : "text"}
+      value={
+        Array.isArray(columnFilterValue)
+          ? columnFilterValue[index] ?? ""
+          : columnFilterValue ?? ""
+      }
+      onChange={(e) => handleInputChange(e.target.value, index)}
+      placeholder={placeholder}
+      className="w-24 border shadow rounded"
+    />
+  );
 
   return (
     <div
@@ -20,43 +61,11 @@ export const Filter: React.FC<FilterProps<RowData>> = ({ column }) => {
     >
       {column.columnDef.filterType === "number" ? (
         <div className="flex space-x-2">
-          <input
-            type="number"
-            value={
-              (columnFilterValue as [number, number] | undefined)?.[0] ?? ""
-            }
-            onChange={(e) =>
-              column.setFilterValue((old: [number, number]) => [
-                e.target.value,
-                old?.[1],
-              ])
-            }
-            placeholder={`Min`}
-            className="w-24 border shadow rounded"
-          />
-          <input
-            type="number"
-            value={
-              (columnFilterValue as [number, number] | undefined)?.[1] ?? ""
-            }
-            onChange={(e) =>
-              column.setFilterValue((old: [number, number]) => [
-                old?.[0],
-                e.target.value,
-              ])
-            }
-            placeholder={`Max`}
-            className="w-24 border shadow rounded"
-          />
+          {renderInput("Min", 0)}
+          {renderInput("Max", 1)}
         </div>
       ) : (
-        <input
-          type="text"
-          value={(columnFilterValue as string | undefined) ?? ""}
-          onChange={(e) => column.setFilterValue(e.target.value)}
-          placeholder={`Search...`}
-          className="w-36 border shadow rounded"
-        />
+        renderInput("Search...", 0)
       )}
     </div>
   );
