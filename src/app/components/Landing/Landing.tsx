@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useFetchTableData } from "../../../hooks/useFetchTableData";
+import { useFetchTableDataWithInterval } from "../../../hooks/useFetchTableData";
 import { TableComponent } from "../Table/TableComponent";
 import { columnsMap } from "../Table/ColumnDefinitions";
 import { CustomColumnDef, RowData } from "@/types/tableTypes";
@@ -24,7 +24,10 @@ export const Landing: React.FC = () => {
   );
   const [showColumnToggle, setShowColumnToggle] = useState(false);
 
-  const { data, loading, error } = useFetchTableData(SERVER_URL);
+  const { data, loading, error } = useFetchTableDataWithInterval(
+    SERVER_URL,
+    10000
+  );
 
   const currentColumns = useMemo(() => columnsMap[activeTab], [activeTab]);
   const currentData = useMemo(() => data?.[activeTab] ?? [], [data, activeTab]);
@@ -33,15 +36,17 @@ export const Landing: React.FC = () => {
   const defaultZoom = 100;
 
   useEffect(() => {
-    document.body.style.zoom = `${zoomLevel}%`;
+    document.body.style.transform = `scale(${zoomLevel / 100})`;
+    document.body.style.transformOrigin = "top left";
+    document.body.style.width = `${10000 / zoomLevel}%`;
   }, [zoomLevel]);
 
   const zoomIn = () => {
-    setZoomLevel((prevZoom) => Math.min(prevZoom + 10, 200));
+    setZoomLevel((prevZoom) => Math.min(prevZoom + 5, 200));
   };
 
   const zoomOut = () => {
-    setZoomLevel((prevZoom) => Math.max(prevZoom - 10, 30));
+    setZoomLevel((prevZoom) => Math.max(prevZoom - 5, 35));
   };
 
   const resetZoom = () => {

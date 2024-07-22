@@ -2,12 +2,17 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { RowData } from "@/types/tableTypes";
 
-export const useFetchTableData = (url: string) => {
+export const useFetchTableDataWithInterval = (
+  url: string,
+  interval: number
+) => {
   const [data, setData] = useState<Record<string, RowData[]> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
         const response = await axios.get(url, {
@@ -25,16 +30,27 @@ export const useFetchTableData = (url: string) => {
             transformedData[key] = response.data[key];
           }
         }
-        setData(transformedData);
+        if (isMounted) {
+          setData(transformedData);
+          setLoading(false);
+        }
       } catch (error) {
-        setError(error as Error);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setError(error instanceof Error ? error : new Error(String(error)));
+          setLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [url]);
+    fetchData(); // Initial fetch
+
+    const intervalId = setInterval(fetchData, interval);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [url, interval]);
 
   return { data, loading, error };
 };
