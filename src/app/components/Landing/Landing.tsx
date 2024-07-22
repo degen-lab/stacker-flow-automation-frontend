@@ -9,6 +9,7 @@ import {
   SortingState,
   VisibilityState,
 } from "@tanstack/react-table";
+import { SERVER_URL } from "@/constants/urls";
 
 export const Landing: React.FC = () => {
   const [activeTab, setActiveTab] = useState("acceptedDelegations");
@@ -23,9 +24,7 @@ export const Landing: React.FC = () => {
   );
   const [showColumnToggle, setShowColumnToggle] = useState(false);
 
-  const { data, loading, error } = useFetchTableData(
-    "http://localhost:8080/data"
-  );
+  const { data, loading, error } = useFetchTableData(SERVER_URL);
 
   const currentColumns = useMemo(() => columnsMap[activeTab], [activeTab]);
   const currentData = useMemo(() => data?.[activeTab] ?? [], [data, activeTab]);
