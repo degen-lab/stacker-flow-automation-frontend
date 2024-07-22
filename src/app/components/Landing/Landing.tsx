@@ -29,6 +29,25 @@ export const Landing: React.FC = () => {
   const currentColumns = useMemo(() => columnsMap[activeTab], [activeTab]);
   const currentData = useMemo(() => data?.[activeTab] ?? [], [data, activeTab]);
 
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const defaultZoom = 100;
+
+  useEffect(() => {
+    document.body.style.zoom = `${zoomLevel}%`;
+  }, [zoomLevel]);
+
+  const zoomIn = () => {
+    setZoomLevel((prevZoom) => Math.min(prevZoom + 10, 200));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel((prevZoom) => Math.max(prevZoom - 10, 30));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(defaultZoom);
+  };
+
   // Initialize states for all tabs
   useEffect(() => {
     interface InitialState {
@@ -150,6 +169,26 @@ export const Landing: React.FC = () => {
             ))}
           </div>
         )}
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={zoomIn}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Zoom In
+        </button>
+        <button
+          onClick={zoomOut}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Zoom Out
+        </button>
+        <button
+          onClick={resetZoom}
+          className="bg-orange-500 hover:bg-orange-600 dark:bg-transparent dark:border dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-500 dark:hover:text-white text-white px-4 py-2 rounded-md transition-colors duration-200 ease-in-out"
+        >
+          Reset Zoom
+        </button>
       </div>
       <ul className="flex border-b mb-4 overflow-x-auto whitespace-nowrap">
         {Object.keys(columnsMap).map((tab) => (
